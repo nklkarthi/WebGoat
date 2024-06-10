@@ -1,19 +1,50 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
-- main
+  branches:
+    exclude:
+      - "*"
+pr:
+  branches:
+    include:
+      - "*"
 
-pool:
-  vmImage: ubuntu-latest
+jobs:
+- job: Build
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+      addToPath: true
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+  - script: |
+      python -m pip install --upgrade pip
+      pip install bandit
+      pip install safety
+      pip install detect-secrets
+      pip install trivy
+    displayName: 'Install security tools'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+  - script: |
+      bandit -r . -f html -o bandit_report.html
+    displayName: 'Run Bandit SAST'
+
+  - script: |
+      safety check --full-report > safety_report.txt
+    displayName: 'Run Safety Dependency Check'
+
+  - script: |
+      detect-secrets scan > secrets_baseline.json
+      detect-secrets audit --report secrets_baseline.json > secrets_report.html
+    displayName: 'Run Detect-Secrets'
+
+  - script: |
+      trivy fs --format html -o trivy_report.html .
+    displayName: 'Run Trivy Container Scan'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.SourcesDirectory)'
+      ArtifactName: 'SecurityReports'
+      publishLocation: 'Container'
+    displayName: 'Publish Security Reports'
