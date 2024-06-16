@@ -51,5 +51,4 @@ resource "azuredevops_build_definition" "pipeline" {
       share_secrets = false
     }
   }
-
 }
