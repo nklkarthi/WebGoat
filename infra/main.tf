@@ -25,7 +25,6 @@ resource "azuredevops_serviceendpoint_azurerm" "azurerm" {
     serviceprincipalid  = var.client_id
     serviceprincipalkey = var.client_secret
   }
-
   azurerm_spn_tenantid      = var.tenant_id
   azurerm_subscription_id   = var.subscription_id
   azurerm_subscription_name = var.subscription_name
@@ -36,10 +35,11 @@ resource "azuredevops_build_definition" "pipeline" {
   name       = "WebGoat DevSecOps Pipeline"
   path       = "\\"
   repository {
-    repo_type   = "GitHub"
-    repo_id     = var.github_repository_name
-    branch_name = "main"
-    yml_path    = "azure-pipelines.yml"
+    repo_type             = "GitHub"
+    service_connection_id = azuredevops_serviceendpoint_github.github.id
+    repo_id               = var.github_repository_name
+    branch_name           = "main"
+    yml_path              = "azure-pipelines.yml"
   }
   ci_trigger {
     use_yaml = true
