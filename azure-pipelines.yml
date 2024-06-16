@@ -1,51 +1,99 @@
 trigger:
   branches:
     include:
-      - "main"
+      - '*'
 
 pr:
   branches:
     include:
-      - "*"
+      - '*'
 
 jobs:
-- job: Build
+- job: SAST
+  displayName: 'Static Application Security Testing (SAST) with Semgrep'
   pool:
     vmImage: 'ubuntu-latest'
   steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.x'
-      addToPath: true
+    - checkout: self
+    - script: |
+        pip install semgrep
+        semgrep --config p/owasp-top-ten --output semgrep-report.json
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: 'semgrep-report.json'
+        ArtifactName: 'SemgrepReport'
 
-  - script: |
-      python -m pip install --upgrade pip
-      pip install bandit
-      pip install safety
-      pip install detect-secrets
-      pip install trivy
-    displayName: 'Install security tools'
+- job: DependencyCheck
+  displayName: 'Dependency Checking with OWASP Dependency-Check'
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+    - checkout: self
+    - script: |
+        mkdir dependency-check
+        curl -L -o dependency-check.zip https://dl.bintray.com/jeremy-long/owasp/dependency-check-6.1.1-release.zip
+        unzip dependency-check.zip -d dependency-check
+        dependency-check/bin/dependency-check.sh --project "Webgoat" --out . --scan .
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '**/dependency-check-report.html'
+        ArtifactName: 'DependencyCheckReport'
 
-  - script: |
-      bandit -r . -f html -o bandit_report.html
-    displayName: 'Run Bandit SAST'
+- job: SecretsScan
+  displayName: 'Secret Scanning with GitLeaks'
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+    - checkout: self
+    - script: |
+        curl -sSL https://github.com/zricethezav/gitleaks/releases/download/v7.5.0/gitleaks-linux-amd64 -o gitleaks
+        chmod +x gitleaks
+        ./gitleaks detect --source . --report-path gitleaks-report.json
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: 'gitleaks-report.json'
+        ArtifactName: 'GitLeaksReport'
 
-  - script: |
-      safety check --full-report > safety_report.txt
-    displayName: 'Run Safety Dependency Check'
+- job: ContainerScan
+  displayName: 'Container Scanning with Trivy'
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+    - checkout: self
+    - script: |
+        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+        trivy image --format json --output trivy-report.json webgoat/webgoat-8.0
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: 'trivy-report.json'
+        ArtifactName: 'TrivyReport'
 
-  - script: |
-      detect-secrets scan > secrets_baseline.json
-      detect-secrets audit --report secrets_baseline.json > secrets_report.html
-    displayName: 'Run Detect-Secrets'
+- job: BuildAndPush
+  displayName: 'Build and Push Docker Image'
+  pool:
+    vmImage: 'ubuntu-latest'
+  dependsOn: [SAST, DependencyCheck, SecretsScan, ContainerScan]
+  steps:
+    - checkout: self
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(dockerRepository)'
+        command: 'buildAndPush'
+        Dockerfile: '**/Dockerfile'
+        tags: |
+          $(Build.BuildId)
 
-  - script: |
-      trivy fs --format html -o trivy_report.html .
-    displayName: 'Run Trivy Container Scan'
-
-  - task: PublishBuildArtifacts@1
-    inputs:
-      PathtoPublish: '$(Build.SourcesDirectory)'
-      ArtifactName: 'SecurityReports'
-      publishLocation: 'Container'
-    displayName: 'Publish Security Reports'
+- job: DeployToACI
+  displayName: 'Deploy to Azure Container Instances'
+  pool:
+    vmImage: 'ubuntu-latest'
+  dependsOn: [BuildAndPush]
+  steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: '<Your Azure Subscription>'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az container create --resource-group <ResourceGroup> --name <ContainerInstanceName> --image <ImageName> --cpu 1 --memory 1 --registry-username $(ACR_USERNAME) --registry-password $(ACR_PASSWORD) --dns-name-label <DNSLabel>
