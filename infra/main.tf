@@ -41,4 +41,14 @@ resource "azuredevops_build_definition" "pipeline" {
     branch_name = "main"
     yml_path    = "azure-pipelines.yml"
   }
+  ci_trigger {
+    use_yaml = true
+  }
+  pull_request_trigger {
+    use_yaml = true
+    forks {
+      enabled       = false
+      share_secrets = false
+    }
+  }
 }

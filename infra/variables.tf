@@ -41,5 +41,3 @@ variable "resource_group_name" {
 variable "github_repository_name" {
   description = "GitHub repository name"
 }
-
-
