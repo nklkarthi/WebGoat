@@ -47,7 +47,7 @@ resource "azuredevops_build_definition" "pipeline" {
   pull_request_trigger {
     use_yaml = true
     forks {
-      enabled = false
+      enabled       = false
       share_secrets = false
     }
   }
