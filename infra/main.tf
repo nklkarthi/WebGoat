@@ -51,6 +51,16 @@ resource "azuredevops_build_definition" "pipeline" {
       share_secrets = false
     }
   }
+
+  variable {
+    name  = "dockerRepository"
+    value = azurerm_container_registry.acr.name
+  }
+
+  variable {
+    name  = "dockerRegistryServiceConnection"
+    value = azuredevops_serviceendpoint_dockerregistry.acr.service_endpoint_name
+  }
 }
 
 resource "azurerm_container_registry" "acr" {
@@ -68,4 +78,8 @@ resource "azuredevops_serviceendpoint_dockerregistry" "acr" {
   docker_username       = azurerm_container_registry.acr.admin_username
   docker_password       = azurerm_container_registry.acr.admin_password
   registry_type         = "Others"
+}
+
+variable {
+
 }
