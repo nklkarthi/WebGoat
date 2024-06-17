@@ -79,7 +79,3 @@ resource "azuredevops_serviceendpoint_dockerregistry" "acr" {
   docker_password       = azurerm_container_registry.acr.admin_password
   registry_type         = "Others"
 }
-
-variable {
-
-}
