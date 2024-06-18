@@ -1,0 +1,48 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      docker: 19
+    commands:
+      - pip install semgrep
+      - curl -LO https://github.com/jeremylong/DependencyCheck/releases/download/v6.5.0/dependency-check-6.5.0-release.zip
+      - unzip dependency-check-6.5.0-release.zip
+      - curl -LO https://github.com/zricethezav/gitleaks/releases/download/v8.2.0/gitleaks_8.2.0_linux_x64.tar.gz
+      - tar -xzf gitleaks_8.2.0_linux_x64.tar.gz
+      - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+  pre_build:
+    commands:
+      - echo "Running Semgrep SAST..."
+      - semgrep --config auto --json > semgrep_report.json
+      - echo "Running OWASP Dependency-Check..."
+      - ./dependency-check/bin/dependency-check.sh --project WebGoat --scan . --out .
+      - echo "Running Gitleaks..."
+      - ./gitleaks detect --source . --report-format json --report-path gitleaks_report.json
+      - echo "Running Trivy..."
+      - trivy image --format json --output trivy_report.json webgoat
+
+  build:
+    commands:
+      - echo "Building Docker Image..."
+      - docker build -t webgoat .
+      - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
+      - docker tag webgoat:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/webgoat:latest
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/webgoat:latest
+
+  post_build:
+    commands:
+      - echo "Committing Scan Reports..."
+      - git config --global user.email "you@example.com"
+      - git config --global user.name "Your Name"
+      - git checkout -b scan-reports
+      - git add semgrep_report.json dependency-check-report.html gitleaks_report.json trivy_report.json
+      - git commit -m "Add security scan reports"
+      - git push origin scan-reports
+      - echo "Triggering AWS App Runner..."
+      - aws apprunner start-deployment --service-arn $APP_RUNNER_SERVICE_ARN
+
+artifacts:
+  files:
+    - '**/*'
