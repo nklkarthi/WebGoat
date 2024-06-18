@@ -84,16 +84,16 @@ jobs:
         tags: |
           $(Build.BuildId)
 
-- job: DeployToACI
-  displayName: 'Deploy to Azure Container Instances'
-  pool:
-    vmImage: 'ubuntu-latest'
-  dependsOn: [BuildAndPush]
-  steps:
-    - task: AzureCLI@2
-      inputs:
-        azureSubscription: '<Your Azure Subscription>'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          az container create --resource-group <ResourceGroup> --name <ContainerInstanceName> --image <ImageName> --cpu 1 --memory 1 --registry-username $(ACR_USERNAME) --registry-password $(ACR_PASSWORD) --dns-name-label <DNSLabel>
+# - job: DeployToACI
+#   displayName: 'Deploy to Azure Container Instances'
+#   pool:
+#     vmImage: 'ubuntu-latest'
+#   dependsOn: [BuildAndPush]
+#   steps:
+#     - task: AzureCLI@2
+#       inputs:
+#         azureSubscription: '<Your Azure Subscription>'
+#         scriptType: 'bash'
+#         scriptLocation: 'inlineScript'
+#         inlineScript: |
+#           az container create --resource-group <ResourceGroup> --name <ContainerInstanceName> --image <ImageName> --cpu 1 --memory 1 --registry-username $(ACR_USERNAME) --registry-password $(ACR_PASSWORD) --dns-name-label <DNSLabel>

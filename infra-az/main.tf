@@ -51,4 +51,31 @@ resource "azuredevops_build_definition" "pipeline" {
       share_secrets = false
     }
   }
+
+  variable {
+    name  = "dockerRepository"
+    value = azurerm_container_registry.acr.name
+  }
+
+  variable {
+    name  = "dockerRegistryServiceConnection"
+    value = azuredevops_serviceendpoint_dockerregistry.acr.service_endpoint_name
+  }
+}
+
+resource "azurerm_container_registry" "acr" {
+  name                = var.acr_name
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  sku                 = "Standard"
+  admin_enabled       = true
+}
+
+resource "azuredevops_serviceendpoint_dockerregistry" "acr" {
+  project_id            = azuredevops_project.project.id
+  service_endpoint_name = "Docker Registry Service Connection"
+  docker_registry       = azurerm_container_registry.acr.login_server
+  docker_username       = azurerm_container_registry.acr.admin_username
+  docker_password       = azurerm_container_registry.acr.admin_password
+  registry_type         = "Others"
 }

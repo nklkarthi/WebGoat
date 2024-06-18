@@ -41,3 +41,12 @@ variable "resource_group_name" {
 variable "github_repository_name" {
   description = "GitHub repository name"
 }
+
+
+variable "location" {
+  description = "The Azure region"
+}
+
+variable "acr_name" {
+  description = "Azure Container Registry name"
+}
