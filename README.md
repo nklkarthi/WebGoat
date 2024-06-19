@@ -16,7 +16,7 @@
     All the required Terraform variables and Environment variables should be created in Terraform Cloud
 
 ## Github actions 
-    Terraform actions are invoked by the Github Flow
+    Terraform workflow are invoked by the Github Flow
 
 
     
