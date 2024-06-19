@@ -20,7 +20,12 @@
 
 *Github actions*
 
-      Terraform workflow are invoked by the Github Flow
+      Terraform workflow are invoked by the Github Actions
+
+
+*Infrastructure provisiong*
+        
+        Terraform resouces for s3, iam, ecr, codebuild, codepipeline using AWS provider.
 
 *Open Source Security Tools used*
 
