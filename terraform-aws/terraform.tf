@@ -5,7 +5,7 @@ terraform {
     organization = "nklkarthi"
 
     workspaces {
-      name = "webgoat-azure-devsecops"
+      name = "webgoat-aws-devsecops"
     }
   }
 

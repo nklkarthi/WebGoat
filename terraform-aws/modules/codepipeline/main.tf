@@ -79,7 +79,7 @@ resource "aws_codepipeline" "webgoat_pipeline" {
       category = "Deploy"
       owner    = "AWS"
       provider = "ECS"
-      version  = "1"
+      version  = "2"
 
       configuration = {
         ClusterName = var.ecs_cluster_name
