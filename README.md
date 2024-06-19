@@ -9,7 +9,7 @@
     variables.tf
     outputs.tf
 
-* Uses Terraform Cloud as backend*
+*Uses Terraform Cloud as backend*
 
         To store the state for Team work
         To store the runs for Team work
@@ -18,11 +18,11 @@
     
     All the required Terraform variables and Environment variables should be created in Terraform Cloud
 
-* Github actions *
+*Github actions*
 
       Terraform workflow are invoked by the Github Flow
 
-  *Open Source Security Tools used*
+*Open Source Security Tools used*
 
       Semgerp for SAST 
       OWASP Dependency check for scan the vulnerabilities in dependencies
