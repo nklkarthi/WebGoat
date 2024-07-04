@@ -21,6 +21,11 @@ resource "aws_codebuild_project" "webgoat_build" {
   build_timeout = 60
 }
 
+resource "aws_codestarconnections_connection" "github" {
+    name          = "github-connection"
+    provider_type = "GitHub"
+}
+
 resource "aws_codepipeline" "webgoat_pipeline" {
   name = var.pipeline_name
 
@@ -41,12 +46,11 @@ resource "aws_codepipeline" "webgoat_pipeline" {
       provider = "GitHub"
       version  = "1"
 
-      configuration = {
-        Owner      = var.github_owner
-        Repo       = var.github_repo
-        Branch     = var.github_branch
-        OAuthToken = var.github_token
-      }
+        configuration = {
+            ConnectionArn    = aws_codestarconnections_connection.github.arn
+            FullRepositoryId = "${var.github_owner}/${var.github_repo}"
+            BranchName       = var.github_branch
+        }
 
       output_artifacts = ["source_output"]
     }
