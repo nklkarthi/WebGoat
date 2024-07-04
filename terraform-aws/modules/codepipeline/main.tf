@@ -71,23 +71,23 @@ resource "aws_codepipeline" "webgoat_pipeline" {
     }
   }
 
-  stage {
-    name = "Deploy"
-
-    action {
-      name     = "Deploy"
-      category = "Deploy"
-      owner    = "AWS"
-      provider = "ECS"
-      version  = "2"
-
-      configuration = {
-        ClusterName = var.ecs_cluster_name
-        ServiceName = var.ecs_service_name
-        FileName    = "imagedefinitions.json"
-      }
-
-      input_artifacts = ["build_output"]
-    }
-  }
+#   stage {
+#     name = "Deploy"
+#
+#     action {
+#       name     = "Deploy"
+#       category = "Deploy"
+#       owner    = "AWS"
+#       provider = "ECS"
+#       version  = "2"
+#
+#       configuration = {
+#         ClusterName = var.ecs_cluster_name
+#         ServiceName = var.ecs_service_name
+#         FileName    = "imagedefinitions.json"
+#       }
+#
+#       input_artifacts = ["build_output"]
+#     }
+#   }
 }

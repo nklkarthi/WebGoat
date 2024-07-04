@@ -9,7 +9,7 @@ data "aws_iam_policy_document" "assume_role_policy" {
     effect = "Allow"
     principals {
       type        = "Service"
-      identifiers = ["codebuild.amazonaws.com"]
+      identifiers = ["codebuild.amazonaws.com","codepipeline.amazonaws.com"]
     }
     actions = ["sts:AssumeRole"]
   }
