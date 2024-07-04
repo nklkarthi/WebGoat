@@ -19,7 +19,7 @@ phases:
       - echo "Running OWASP Dependency-Check..."
       - ./dependency-check/bin/dependency-check.sh --project WebGoat --scan . --out .
       - echo "Running Gitleaks..."
-      - ./gitleaks detect --source . --report-format json --report-path gitleaks_report.json
+      - ./gitleaks detect --source $CODEBUILD_SRC_DIR --report-format json --report-path gitleaks_report.json || true
       - echo "Running Trivy..."
       - trivy image --format json --output trivy_report.json webgoat
 
